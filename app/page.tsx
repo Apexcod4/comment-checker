@@ -30,7 +30,13 @@ interface AnalyzeResult {
 }
 
 interface ManualPrompt {
-  platform: "instagram" | "tiktok";
+  platform:
+    | "instagram"
+    | "tiktok"
+    | "youtube"
+    | "reddit"
+    | "facebook"
+    | "snapchat";
 }
 
 const SENTIMENT_LABEL: Record<Sentiment, string> = {
@@ -260,8 +266,8 @@ export default function Home() {
           <p className="max-w-md text-base leading-7 text-dim">
             Paste a post link and we&apos;ll sort what people actually said
             from the noise — sentiment, recurring clusters, and the spam
-            that doesn&apos;t count. X posts scan automatically; Instagram
-            and TikTok need the comments pasted in.
+            that doesn&apos;t count. Works on X, Instagram, TikTok, YouTube,
+            Reddit, Facebook, and Snapchat.
           </p>
         </header>
 
