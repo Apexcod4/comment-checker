@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  --void: #06070c;
+  --paper: #f2f0e9;
+  --signal: #ff2f6d;
+  --dim: #767b90;
+  --line: #20242f;
+  --positive: #4ce0b3;
+  --negative: #ff6b5b;
+  --neutral: #5b6178;
+}
+
+@theme inline {
+  --color-void: var(--void);
+  --color-paper: var(--paper);
+  --color-signal: var(--signal);
+  --color-dim: var(--dim);
+  --color-line: var(--line);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-neutral: var(--neutral);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-data);
+}
+
+body {
+  background: var(--void);
+  color: var(--paper);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--void);
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+
+.vertical-label {
+  writing-mode: vertical-rl;
+  letter-spacing: 0.3em;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateX(-10%);
+  }
+  100% {
+    transform: translateX(110%);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
