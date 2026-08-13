@@ -25,7 +25,7 @@ export interface ClassificationResult {
   comments: ClassifiedComment[];
 }
 
-const MODEL = "deepseek-ai/deepseek-v4-pro";
+const MODEL = "deepseek-ai/deepseek-v4-flash-0731";
 const BATCH_SIZE = 50;
 
 // NVIDIA's endpoint accepts this DeepSeek-specific field directly in the
