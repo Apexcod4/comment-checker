@@ -25,25 +25,19 @@ export interface ClassificationResult {
   comments: ClassifiedComment[];
 }
 
-const MODEL = "deepseek-ai/deepseek-v4-flash-0731";
+const MODEL = "llama-3.3-70b-versatile";
 const BATCH_SIZE = 50;
 
-// NVIDIA's endpoint accepts this DeepSeek-specific field directly in the
-// request body (the OpenAI Node SDK has no typed knowledge of it).
-type NvidiaChatParams = OpenAI.Chat.ChatCompletionCreateParamsNonStreaming & {
-  chat_template_kwargs?: { thinking: boolean };
-};
-
 function getClient(): OpenAI {
-  const apiKey = process.env.NVIDIA_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "NVIDIA_API_KEY is not set. Add it to .env.local (see .env.example)."
+      "GROQ_API_KEY is not set. Add it to .env.local (see .env.example)."
     );
   }
   return new OpenAI({
     apiKey,
-    baseURL: "https://integrate.api.nvidia.com/v1",
+    baseURL: "https://api.groq.com/openai/v1",
   });
 }
 
@@ -59,11 +53,10 @@ async function classifyBatch(
 ): Promise<ClassifiedComment[]> {
   const payload = batch.map((c) => ({ id: c.id, text: c.text }));
 
-  const params: NvidiaChatParams = {
+  const params: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
     model: MODEL,
     max_tokens: 4096,
     temperature: 0,
-    chat_template_kwargs: { thinking: false },
     messages: [
       {
         role: "user",
@@ -108,11 +101,10 @@ async function clusterThemes(
   // Cap the sample so the prompt stays a reasonable size on very large threads.
   const sample = genuine.slice(0, 300);
 
-  const params: NvidiaChatParams = {
+  const params: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
     model: MODEL,
     max_tokens: 2048,
     temperature: 0,
-    chat_template_kwargs: { thinking: false },
     messages: [
       {
         role: "user",
