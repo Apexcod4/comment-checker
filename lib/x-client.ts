@@ -11,13 +11,15 @@ export interface FetchResult {
   truncated: boolean;
 }
 
-// Recent search paginates in pages of up to 100. Without a cap, a heavily
-// replied-to post pulls one billed API call per page and can run for
-// minutes. Capped low for now (testing/budget) — raise once cost and
-// latency are under control. Also used to cap the manual-paste path (see
-// route.ts) so both input paths stay within classify.ts's fast single-call
-// limit.
-export const MAX_COMMENTS = 100;
+// General cap used for Apify (Instagram/TikTok/Facebook), YouTube, Reddit,
+// and the manual-paste path — all cheap/free per-comment, so this can run
+// higher now that Groq classification is fast.
+export const MAX_COMMENTS = 500;
+
+// X's official API bills per read, so it stays capped much lower
+// regardless of the general cap above — a heavily replied-to post pulls
+// one billed API call per page (100 comments) and this budget is tight.
+export const X_MAX_COMMENTS = 100;
 
 const X_API_BASE = "https://api.x.com/2";
 
@@ -84,7 +86,7 @@ export async function fetchTweetAndReplies(tweetId: string): Promise<FetchResult
     }
 
     nextToken = page?.meta?.next_token;
-  } while (nextToken && comments.length < MAX_COMMENTS);
+  } while (nextToken && comments.length < X_MAX_COMMENTS);
 
   return { postText, comments, truncated: Boolean(nextToken) };
 }
