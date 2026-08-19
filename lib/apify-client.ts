@@ -97,7 +97,15 @@ export async function fetchInstagramComments(
     directUrls: [postUrl],
     resultsLimit: limit,
   });
-  return toRawComments(items);
+  console.log(`[STAGE 1] Apify raw items returned: ${items.length}`);
+  if (items.length > 0) {
+    console.log(`[STAGE 1] Sample raw item keys: ${Object.keys(items[0] as object).join(", ")}`);
+  }
+
+  const comments = toRawComments(items);
+  console.log(`[STAGE 2] After code-side filtering: ${comments.length}`);
+
+  return comments;
 }
 
 /**
