@@ -9,8 +9,8 @@ recurring themes, and a filterable log of every comment.
 - **Reddit** — pulled automatically via the official Reddit OAuth API (app-only).
 - **Snapchat** — no working automated option found; falls back to manual paste.
 - Any platform falls back to manual paste if its credentials aren't configured.
-- Classification (sentiment, spam, themes, summary) runs through Llama 3.3 70B
-  via Groq's OpenAI-compatible endpoint.
+- Classification (sentiment, spam, themes, actions) runs through OpenAI's
+  gpt-oss-20b via Groq's OpenAI-compatible endpoint.
 
 ## Setup
 
@@ -39,12 +39,19 @@ Open [http://localhost:3000](http://localhost:3000).
   Apify/YouTube/Reddit/manual-paste, and separately at `X_MAX_COMMENTS` (100)
   for X specifically, since X's official API bills per read and that budget
   is tight. Raise either deliberately, not by accident.
-- **Instagram comment counts are often much lower than the real total.** The
-  Apify actor only sees comments visible to logged-out Instagram viewers,
-  with no way to paginate deeper on the free tier — a post with hundreds of
-  comments may only return a dozen or so. This is a known limitation of the
-  actor, not a bug here. Worth mentioning to clients so expectations are set
-  correctly.
+- **Instagram is capped at 15 comments regardless of `MAX_COMMENTS`.** Root
+  cause confirmed via 4-stage logging (Apify → code filter → sent to AI →
+  AI response all showed 15, so nothing drops in our code) plus the Apify
+  Console itself: `apify/instagram-comment-scraper` gates free-tier usage to
+  "the top 15 comments, sorted by newest" — full access needs the Apify
+  account to be on a paid **Starter plan** (~$29-39/mo, as prepaid credit,
+  not a separate fee). This is an Apify monetization gate on this one
+  actor, not an Instagram-wide defense as earlier assumed here (that theory
+  came from one failed alternative-actor test, which was likely hitting the
+  same kind of gate rather than proving a platform-wide block). Deferred
+  for now — revisit once there's revenue to justify the recurring cost.
+  Set client expectations accordingly until then: Instagram reports reflect
+  a small recent sample, not the full comment count.
 - Models get deprecated by providers without much warning (this happened
   once already — see git history for the DeepSeek V4 Pro → Flash swap). If
   classification suddenly starts failing, check whether `MODEL` in

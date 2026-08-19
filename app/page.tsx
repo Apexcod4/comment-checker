@@ -11,6 +11,14 @@ interface ThemeCluster {
   exampleQuotes: string[];
 }
 
+type Urgency = "high" | "medium" | "low";
+
+interface ActionItem {
+  text: string;
+  count: number;
+  urgency: Urgency;
+}
+
 interface ClassifiedComment {
   id: string;
   text: string;
@@ -24,7 +32,7 @@ interface AnalyzeResult {
   sentimentBreakdown: Record<Sentiment, number>;
   spamCount: number;
   themes: ThemeCluster[];
-  summary: string;
+  actions: ActionItem[];
   truncated: boolean;
   comments: ClassifiedComment[];
 }
@@ -43,6 +51,12 @@ const SENTIMENT_LABEL: Record<Sentiment, string> = {
   positive: "POSITIVE",
   neutral: "NEUTRAL",
   negative: "NEGATIVE",
+};
+
+const URGENCY_ARROW_COLOR: Record<Urgency, string> = {
+  high: "text-signal",
+  medium: "text-paper",
+  low: "text-dim",
 };
 
 const SENTIMENT_VAR: Record<Sentiment, string> = {
@@ -380,18 +394,40 @@ export default function Home() {
               </p>
             )}
 
-            <section className="flex flex-col gap-2">
-              <p className="font-mono text-[11px] tracking-[0.2em] text-dim">
-                READOUT
+            <section className="flex flex-col gap-3 border border-signal/40 bg-signal/[0.04] p-4">
+              <p className="font-display text-2xl leading-none tracking-wide text-paper">
+                DO THIS
               </p>
-              <p className="text-lg leading-8 text-paper">{result.summary}</p>
+              {result.actions.length === 0 ? (
+                <p className="font-mono text-sm text-dim">
+                  Nothing needs your attention.
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-2.5">
+                  {result.actions.map((action, i) => (
+                    <li key={i} className="flex items-baseline gap-3">
+                      <span
+                        className={`font-mono text-base ${URGENCY_ARROW_COLOR[action.urgency]}`}
+                      >
+                        →
+                      </span>
+                      <span className="flex-1 text-base leading-6 text-paper">
+                        {action.text}
+                      </span>
+                      <span className="shrink-0 font-mono text-xs tabular-nums text-dim">
+                        {action.count}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
 
-            <section className="flex flex-col gap-3">
-              <p className="font-mono text-[11px] tracking-[0.2em] text-dim">
+            <section className="flex flex-col gap-2">
+              <p className="font-mono text-[10px] tracking-[0.2em] text-dim">
                 SIGNAL COMPOSITION — {total} GENUINE / {result.spamCount} NOISE
               </p>
-              <div className="flex h-8 w-full gap-0.5">
+              <div className="flex h-2 w-full gap-0.5">
                 {(["positive", "neutral", "negative"] as Sentiment[]).map(
                   (s) => {
                     const count = result.sentimentBreakdown[s];
