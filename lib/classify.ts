@@ -90,7 +90,14 @@ async function createWithRetry(
         : messageMatch
           ? parseFloat(messageMatch[1])
           : 15;
-      const waitMs = Math.ceil(waitSeconds * 1000) + 500; // small buffer
+      // Groq's reported wait can run into the tens of minutes when a
+      // daily (not just per-minute) cap is hit — far longer than this
+      // function's own execution budget, so honoring it verbatim just
+      // guarantees a timeout. Cap it at 200s: daily/hourly limits are
+      // typically sliding windows, so retrying sooner than the full
+      // reported wait still has a real chance of succeeding once older
+      // usage ages out, rather than waiting for nothing.
+      const waitMs = Math.min(Math.ceil(waitSeconds * 1000), 200_000) + 500;
 
       console.log(
         `[RATE LIMIT] Attempt ${attempt + 1}/${maxRetries} hit 429, waiting ${waitMs}ms before retry`
@@ -110,7 +117,14 @@ async function classifyBatch(
 
   const params: GroqChatParams = {
     model: MODEL,
-    max_tokens: 4096,
+    // 4096 was needlessly close to Groq's 8000 TPM cap and could push
+    // prompt+max_tokens over the limit outright on a batch with
+    // longer-than-average comments (413, not a retryable 429). But IDs
+    // from some platforms (e.g. YouTube's ~26-char alphanumeric comment
+    // IDs) make 50 items add up to more than a token-light estimate
+    // suggests, so cutting too far (1500) truncated the JSON mid-string
+    // instead. 3000 leaves headroom against both failure modes.
+    max_tokens: 3000,
     temperature: 0,
     reasoning_effort: "low",
     messages: [

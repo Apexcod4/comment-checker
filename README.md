@@ -35,10 +35,15 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Notes
 
-- Comment volume is capped at `MAX_COMMENTS` (500) in `lib/x-client.ts` for
+- Comment volume is capped at `MAX_COMMENTS` (150) in `lib/x-client.ts` for
   Apify/YouTube/Reddit/manual-paste, and separately at `X_MAX_COMMENTS` (100)
   for X specifically, since X's official API bills per read and that budget
-  is tight. Raise either deliberately, not by accident.
+  is tight. 150 isn't arbitrary — it's `BATCH_SIZE * CONCURRENCY` from
+  `lib/classify.ts` (50 * 3), i.e. exactly one wave of concurrent
+  classification calls. Raising it means additional waves, each risking a
+  Groq 429 rate-limit backoff that compounds toward the Vercel function
+  timeout (300s) on large threads. Raise either cap deliberately, not by
+  accident.
 - **Instagram is capped at 15 comments regardless of `MAX_COMMENTS`.** Root
   cause confirmed via 4-stage logging (Apify → code filter → sent to AI →
   AI response all showed 15, so nothing drops in our code) plus the Apify

@@ -11,7 +11,7 @@ import { fetchYoutubeComments, hasYoutubeKey } from "@/lib/youtube-client";
 import { fetchRedditComments, hasRedditCreds } from "@/lib/reddit-client";
 import { classifyComments } from "@/lib/classify";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 interface AnalyzeRequest {
   link?: string;

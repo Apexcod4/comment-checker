@@ -213,7 +213,13 @@ export default function Home() {
   }
 
   function toggleSentimentFilter(next: LogFilter) {
-    setLogFilter((current) => (current === next ? null : next));
+    const isSame = logFilter === next;
+    setLogFilter(isSame ? null : next);
+    if (!isSame) {
+      requestAnimationFrame(() => {
+        logRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
   }
 
   function toggleTheme(theme: ThemeCluster) {
@@ -280,8 +286,7 @@ export default function Home() {
           <p className="max-w-md text-base leading-7 text-dim">
             Paste a post link and we&apos;ll sort what people actually said
             from the noise — sentiment, recurring clusters, and the spam
-            that doesn&apos;t count. Works on X, Instagram, TikTok, YouTube,
-            Reddit, Facebook, and Snapchat.
+            that doesn&apos;t count. Works on X, Instagram, and YouTube.
           </p>
         </header>
 

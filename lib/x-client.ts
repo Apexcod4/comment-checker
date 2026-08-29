@@ -12,9 +12,14 @@ export interface FetchResult {
 }
 
 // General cap used for Apify (Instagram/TikTok/Facebook), YouTube, Reddit,
-// and the manual-paste path — all cheap/free per-comment, so this can run
-// higher now that Groq classification is fast.
-export const MAX_COMMENTS = 500;
+// and the manual-paste path. Classification runs in batches of 50 (see
+// BATCH_SIZE in lib/classify.ts) with 3 running concurrently — that trio
+// already presses close to Groq's shared 8000 TPM limit, so a 500-comment
+// scan (10 batches, 4 concurrent waves) meant repeated 429 retries that
+// compounded past even a 300s function timeout. 150 = one wave's worth
+// (50 * 3), so a scan needs at most one rate-limit backoff instead of
+// several stacked ones.
+export const MAX_COMMENTS = 150;
 
 // X's official API bills per read, so it stays capped much lower
 // regardless of the general cap above — a heavily replied-to post pulls
