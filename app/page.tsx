@@ -167,6 +167,9 @@ export default function Home() {
   const [activeTheme, setActiveTheme] = useState<string | null>(null);
   const elapsedSeconds = useElapsedSeconds(loading);
   const logRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [downloadNotice, setDownloadNotice] = useState<string | null>(null);
 
   async function runAnalysis(body: Record<string, unknown>) {
     setLoading(true);
@@ -210,6 +213,49 @@ export default function Home() {
     e.preventDefault();
     if (!manual || !pastedComments.trim()) return;
     runAnalysis({ platform: manual.platform, pastedComments });
+  }
+
+  async function handleDownload() {
+    setDownloadError(null);
+    setDownloadNotice(null);
+    if (!link.trim()) {
+      setDownloadError("Paste an X or Instagram post link first.");
+      return;
+    }
+    setDownloading(true);
+    try {
+      const res = await fetch("/api/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ link: link.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDownloadError(data.error ?? "Couldn't fetch that video.");
+        return;
+      }
+
+      // The file route sends Content-Disposition: attachment, so pointing a
+      // link at it hands the stream straight to the browser's downloader.
+      const a = document.createElement("a");
+      a.href = data.fileUrl;
+      a.download = data.filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      const details = [
+        data.label,
+        data.bytes ? `${(data.bytes / (1024 * 1024)).toFixed(1)} MB` : null,
+      ].filter(Boolean);
+      setDownloadNotice(
+        `Download started: ${data.filename}${details.length ? ` (${details.join(", ")})` : ""}`
+      );
+    } catch {
+      setDownloadError("Network error — is the server running?");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   function toggleSentimentFilter(next: LogFilter) {
@@ -297,7 +343,7 @@ export default function Home() {
           >
             POST LINK
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               id="link"
               type="url"
@@ -305,7 +351,7 @@ export default function Home() {
               value={link}
               onChange={(e) => setLink(e.target.value)}
               placeholder="https://x.com/user/status/..."
-              className="flex-1 border border-line bg-void/60 px-3 py-3 font-mono text-sm text-paper outline-none transition-colors focus:border-signal"
+              className="min-w-[12rem] flex-1 border border-line bg-void/60 px-3 py-3 font-mono text-sm text-paper outline-none transition-colors focus:border-signal"
             />
             <button
               type="submit"
@@ -314,7 +360,29 @@ export default function Home() {
             >
               {loading ? "SCANNING" : "SCAN →"}
             </button>
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={downloading}
+              className="border border-line px-5 py-3 font-mono text-xs tracking-[0.2em] text-dim transition-all hover:border-signal hover:text-paper disabled:opacity-40"
+            >
+              {downloading ? "FETCHING" : "DOWNLOAD VIDEO ↓"}
+            </button>
           </div>
+          {downloadError && (
+            <p className="font-mono text-xs leading-5 text-negative">
+              {downloadError}
+            </p>
+          )}
+          {downloadNotice && (
+            <p className="font-mono text-xs leading-5 text-positive">
+              {downloadNotice}
+            </p>
+          )}
+          <p className="font-mono text-[10px] leading-5 text-dim">
+            DOWNLOAD VIDEO works on public X and Instagram posts. Only download
+            videos you have the rights to.
+          </p>
         </form>
 
         {manual && (

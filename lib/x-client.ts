@@ -95,3 +95,40 @@ export async function fetchTweetAndReplies(tweetId: string): Promise<FetchResult
 
   return { postText, comments, truncated: Boolean(nextToken) };
 }
+
+export interface VideoVariant {
+  url: string;
+  contentType: string;
+  bitrate: number;
+}
+
+/**
+ * Looks up a tweet's attached video files via the official API. This is a
+ * billed read, so it's only the fallback for the free syndication lookup in
+ * lib/video-download.ts. `found: false` means the API has no such tweet
+ * (deleted, or protected from an app-only token); an empty `variants` list
+ * on a found tweet means it has no video.
+ */
+export async function fetchTweetVideoVariants(
+  tweetId: string
+): Promise<{ found: boolean; variants: VideoVariant[] }> {
+  const res = await xGet(`/tweets/${tweetId}`, {
+    expansions: "attachments.media_keys",
+    "media.fields": "type,variants",
+  });
+  // v2 reports missing/protected tweets as a 200 with `errors` and no `data`.
+  if (!res?.data) return { found: false, variants: [] };
+
+  const variants: VideoVariant[] = [];
+  for (const media of res?.includes?.media ?? []) {
+    if (media.type !== "video" && media.type !== "animated_gif") continue;
+    for (const v of media.variants ?? []) {
+      variants.push({
+        url: v.url,
+        contentType: v.content_type,
+        bitrate: v.bit_rate ?? 0,
+      });
+    }
+  }
+  return { found: true, variants };
+}

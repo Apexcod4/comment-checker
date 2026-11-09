@@ -11,6 +11,8 @@ recurring themes, and a filterable log of every comment.
 - Any platform falls back to manual paste if its credentials aren't configured.
 - Classification (sentiment, spam, themes, actions) runs through OpenAI's
   gpt-oss-20b via Groq's OpenAI-compatible endpoint.
+- **Video download (X, Instagram)** — the "Download video" button next to
+  "Scan" turns a public post link into an MP4 download. See Notes below.
 
 ## Setup
 
@@ -57,6 +59,21 @@ Open [http://localhost:3000](http://localhost:3000).
   for now — revisit once there's revenue to justify the recurring cost.
   Set client expectations accordingly until then: Instagram reports reflect
   a small recent sample, not the full comment count.
+- **Video download** (`/api/download` resolves a link, `/api/download/file`
+  streams the bytes; nothing is stored). Public posts only, 100 MB cap
+  (`MAX_DOWNLOAD_BYTES` in `lib/video-download.ts`).
+  - **X** tries X's free, keyless syndication endpoint first (unofficial, so
+    it can change or break without notice). Only if that call itself fails
+    (network error, 429, 5xx, bad response) does it spend a billed X API
+    read via `X_BEARER_TOKEN`. A definite "no video" or "gone" from the free
+    endpoint is final and never triggers the paid fallback.
+  - **Instagram** uses `apify/instagram-scraper` (billed per run), which
+    needs `APIFY_API_TOKEN`. Its output shape is handled defensively but
+    hasn't been verified against a live run yet.
+  - The file route only fetches `video.twimg.com`, `*.cdninstagram.com` and
+    `*.fbcdn.net`, so it can't be pointed at arbitrary URLs.
+  - No rate limiting yet: every download costs bandwidth, and (for
+    Instagram, or X when the free endpoint fails) money.
 - Models get deprecated by providers without much warning (this happened
   once already — see git history for the DeepSeek V4 Pro → Flash swap). If
   classification suddenly starts failing, check whether `MODEL` in

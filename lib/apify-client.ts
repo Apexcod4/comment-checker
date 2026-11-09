@@ -108,6 +108,39 @@ export async function fetchInstagramComments(
   return comments;
 }
 
+interface ApifyPostItem {
+  videoUrl?: string;
+  childPosts?: Array<{ videoUrl?: string }>;
+}
+
+/**
+ * Picks the video file out of an Instagram post scrape: the post's own
+ * `videoUrl` for a reel/video, else the first video inside a carousel.
+ */
+export function pickInstagramVideoUrl(items: unknown[]): string | null {
+  for (const item of items as ApifyPostItem[]) {
+    if (item?.videoUrl) return item.videoUrl;
+    const child = item?.childPosts?.find((c) => c.videoUrl);
+    if (child?.videoUrl) return child.videoUrl;
+  }
+  return null;
+}
+
+/**
+ * Looks up the video file for an Instagram post/reel via Apify's
+ * apify/instagram-scraper actor (billed per run).
+ */
+export async function fetchInstagramVideoUrl(
+  postUrl: string
+): Promise<string | null> {
+  const items = await runActorSync("apify~instagram-scraper", {
+    directUrls: [postUrl],
+    resultsType: "posts",
+    resultsLimit: 1,
+  });
+  return pickInstagramVideoUrl(items);
+}
+
 /**
  * Pulls comments from a TikTok video via Apify's
  * clockworks/tiktok-comments-scraper actor.
