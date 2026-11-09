@@ -167,6 +167,7 @@ export default function Home() {
   const [activeTheme, setActiveTheme] = useState<string | null>(null);
   const elapsedSeconds = useElapsedSeconds(loading);
   const logRef = useRef<HTMLDivElement>(null);
+  const linkRef = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [downloadNotice, setDownloadNotice] = useState<string | null>(null);
@@ -213,6 +214,14 @@ export default function Home() {
     e.preventDefault();
     if (!manual || !pastedComments.trim()) return;
     runAnalysis({ platform: manual.platform, pastedComments });
+  }
+
+  function handleClearLink() {
+    setLink("");
+    // Messages about the old link no longer apply to a fresh one.
+    setDownloadError(null);
+    setDownloadNotice(null);
+    linkRef.current?.focus();
   }
 
   async function handleDownload() {
@@ -344,15 +353,28 @@ export default function Home() {
             POST LINK
           </label>
           <div className="flex flex-wrap gap-2">
-            <input
-              id="link"
-              type="url"
-              required
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="https://x.com/user/status/..."
-              className="min-w-[12rem] flex-1 border border-line bg-void/60 px-3 py-3 font-mono text-sm text-paper outline-none transition-colors focus:border-signal"
-            />
+            <div className="relative min-w-[12rem] flex-1">
+              <input
+                ref={linkRef}
+                id="link"
+                type="url"
+                required
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="https://x.com/user/status/..."
+                className="w-full border border-line bg-void/60 py-3 pl-3 pr-10 font-mono text-sm text-paper outline-none transition-colors focus:border-signal"
+              />
+              {link && (
+                <button
+                  type="button"
+                  onClick={handleClearLink}
+                  aria-label="Clear link"
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center font-mono text-base text-dim transition-colors hover:text-paper"
+                >
+                  ×
+                </button>
+              )}
+            </div>
             <button
               type="submit"
               disabled={loading}
